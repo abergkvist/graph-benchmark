@@ -5,6 +5,7 @@ Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB) against the
 ## Prerequisites
 
 - Docker and Docker Compose
+- For LadybugDB: the `lbug` shell installed on the host, used for seeding
 
 ## Starting databases
 
@@ -21,6 +22,15 @@ docker compose up -d arcadedb
 docker compose up -d
 ```
 
+LadybugDB is embedded, so the database itself is not a service. It lives in a file
+created with the `lbug` shell (see [Seeding LadybugDB](#seeding-ladybugdb)), and
+`ladybug-explorer` is a web UI for that file. Seed first, since the explorer opens the
+database read-only and refuses to start without it:
+
+```bash
+docker compose up -d ladybug-explorer
+```
+
 ## Web interfaces
 
 | Database  | URL                        | Credentials              |
@@ -28,6 +38,7 @@ docker compose up -d
 | Neo4j     | http://localhost:7474       | neo4j / benchmark        |
 | Memgraph  | http://localhost:3000       | –                        |
 | ArcadeDB  | http://localhost:2480       | root / benchmark         |
+| Ladybug   | http://localhost:8000       | –                        |
 
 ## Bolt ports
 
@@ -45,6 +56,10 @@ CSV files in `data/` are mounted into each container:
 | Neo4j     | `/var/lib/neo4j/import/`              |
 | Memgraph  | `/usr/lib/memgraph/import-data/`      |
 | ArcadeDB  | `/home/arcadedb/import/`              |
+| Ladybug Explorer | `/data/` (read-only)           |
+
+The `lbug` shell reads `data/` straight from the repo, and the database file goes in `ladybug/`,
+which is mounted at `/database` in the explorer.
 
 Seed scripts are located in `seed/`.
 
@@ -69,18 +84,20 @@ language to `sqlscript`.
 
 ### Seeding LadybugDB
 
-LadybugDB is embedded and has no server, so it runs outside docker-compose and reads
-`data/` directly. `seed/seed-ladybug.cypher` creates the schema, loads the CSVs and JSON
-and builds the edges. Run it from the repo root (paths in the file are relative):
+LadybugDB is embedded and has no server, so seeding runs on the host with the `lbug`
+shell and reads `data/` directly. `seed/seed-ladybug.cypher` creates the schema, loads the
+CSVs and JSON and builds the edges. Run it from the repo root (paths in the file are
+relative). The database goes in `ladybug/`, where the explorer looks for it. The file is
+single-writer, so stop the explorer first (`docker compose stop ladybug-explorer`):
 
 ```bash
-lbug benchmark.lbdb -i seed/seed-ladybug.cypher
+lbug ladybug/benchmark.lbdb -i seed/seed-ladybug.cypher
 ```
 
 `-i` prints nothing, so check the result with:
 
 ```bash
-lbug benchmark.lbdb <<'EOF'
+lbug ladybug/benchmark.lbdb <<'EOF'
 MATCH (n:Link) RETURN 'Link' AS type, count(n) AS count
 UNION ALL MATCH (n:PlaceCenter) RETURN 'PlaceCenter', count(n)
 UNION ALL MATCH (n:Location) RETURN 'Location', count(n)
@@ -95,6 +112,11 @@ Expected: Link 31970, PlaceCenter 3092, Location 2779, NEXT_LINK 37134, HAS_LINK
 NEXT_LOCATION 1895, HAS_PLACECENTER 3088. Re-running re-seeds from scratch. The JSON
 extension is installed on first run (needs internet). Ladybug has no point type, so
 `Location` stores `wkt` plus `lon`/`lat` doubles, and no secondary indexes exist.
+
+The explorer is built from `docker/ladybug-explorer/` instead of pulled, because the
+published `ghcr.io/ladybugdb/explorer` (0.19.1) cannot open a database written by `lbug`
+0.20.4 (storage version 47 vs 43). If you change the `lbug` version, set `LBUG_VERSION`
+in `docker-compose.yml` to match and run `docker compose build ladybug-explorer`.
 
 ## Shut down
 

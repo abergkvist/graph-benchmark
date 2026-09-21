@@ -1,0 +1,5 @@
+# LadybugDB databases, including WAL and other sidecar files
+*.lbdb*
+
+# Written by the Ladybug Explorer container next to the database
+ladybug/explorer-session.json

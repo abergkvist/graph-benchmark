@@ -53,6 +53,25 @@ services:
       memgraph:
         condition: service_healthy
 
+  # Explorer for a Ladybug database created on the host with lbug.
+  # Seed first: lbug ladybug/benchmark.lbdb -i seed/seed-ladybug.cypher
+  # The database is single-writer, so stop this service before re-seeding.
+  # Built locally because the published image lags behind lbug, see the Dockerfile.
+  ladybug-explorer:
+    build:
+      context: ./docker/ladybug-explorer
+      args:
+        LBUG_VERSION: 0.20.4
+    image: graph-benchmark/ladybug-explorer:0.20.4
+    environment:
+      LBUG_FILE: benchmark.lbdb
+      MODE: READ_ONLY
+    volumes:
+      - ./ladybug:/database
+      - ./data:/data:ro
+    ports:
+      - "8000:8000"
+
   arcadedb:
     image: arcadedata/arcadedb:latest
     environment:
