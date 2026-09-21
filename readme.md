@@ -1,6 +1,6 @@
 # graph-benchmark
 
-Comparison of graph databases (Neo4j, Memgraph, ArcadeDB) against the same dataset and queries.     
+Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB) against the same dataset and queries.     
 
 ## Prerequisites
 
@@ -66,6 +66,35 @@ curl -u root:benchmark -X POST http://localhost:2480/api/v1/command/benchmark \
 It prints the record count per type when done, and re-running it re-seeds from
 scratch. Studio (http://localhost:2480) works too — paste the file in and set the
 language to `sqlscript`.
+
+### Seeding LadybugDB
+
+LadybugDB is embedded and has no server, so it runs outside docker-compose and reads
+`data/` directly. `seed/seed-ladybug.cypher` creates the schema, loads the CSVs and JSON
+and builds the edges. Run it from the repo root (paths in the file are relative):
+
+```bash
+lbug benchmark.lbdb -i seed/seed-ladybug.cypher
+```
+
+`-i` prints nothing, so check the result with:
+
+```bash
+lbug benchmark.lbdb <<'EOF'
+MATCH (n:Link) RETURN 'Link' AS type, count(n) AS count
+UNION ALL MATCH (n:PlaceCenter) RETURN 'PlaceCenter', count(n)
+UNION ALL MATCH (n:Location) RETURN 'Location', count(n)
+UNION ALL MATCH ()-[r:NEXT_LINK]->() RETURN 'NEXT_LINK', count(r)
+UNION ALL MATCH ()-[r:HAS_LINK]->() RETURN 'HAS_LINK', count(r)
+UNION ALL MATCH ()-[r:NEXT_LOCATION]->() RETURN 'NEXT_LOCATION', count(r)
+UNION ALL MATCH ()-[r:HAS_PLACECENTER]->() RETURN 'HAS_PLACECENTER', count(r);
+EOF
+```
+
+Expected: Link 31970, PlaceCenter 3092, Location 2779, NEXT_LINK 37134, HAS_LINK 3092,
+NEXT_LOCATION 1895, HAS_PLACECENTER 3088. Re-running re-seeds from scratch. The JSON
+extension is installed on first run (needs internet). Ladybug has no point type, so
+`Location` stores `wkt` plus `lon`/`lat` doubles, and no secondary indexes exist.
 
 ## Shut down
 
