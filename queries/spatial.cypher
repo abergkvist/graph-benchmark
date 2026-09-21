@@ -14,6 +14,17 @@ MATCH (l2:Location) WHERE geo.distance(l1.wkt, l2.wkt) < 1000
 RETURN l2;
 
 
+// LadybugDB: no spatial types, so haversine on the lon/lat columns
+// (earth radius 6378140 m)
+MATCH (l1:Location {signature: 'HRBG'})
+MATCH (l2:Location)
+WHERE 2 * 6378140 * asin(sqrt(
+        pow(sin(radians(l2.lat - l1.lat) / 2), 2)
+        + cos(radians(l1.lat)) * cos(radians(l2.lat))
+          * pow(sin(radians(l2.lon - l1.lon) / 2), 2))) < 1000
+RETURN l2;
+
+
 /*
     Fetch all locations in Stockholm bounding box
 */
@@ -30,4 +41,10 @@ WITH geo.geomFromText('POINT (17.729 59.220)') as sw,  geo.geomFromText('POINT (
 WITH geo.envelope(geo.lineString([sw, ne])) AS bbox
 MATCH (l:Location)
 WHERE geo.within(l.wkt, bbox)
+RETURN l;
+
+// LadybugDB has no spatial types, so this compares the lon/lat columns directly
+MATCH (l:Location)
+WHERE l.lon >= 17.729 AND l.lon <= 18.287
+  AND l.lat >= 59.220 AND l.lat <= 59.44
 RETURN l;
