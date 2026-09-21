@@ -3,3 +3,10 @@
 
 # Written by the Ladybug Explorer container next to the database
 ladybug/explorer-session.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
