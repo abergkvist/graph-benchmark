@@ -31,7 +31,11 @@ RETURN length(p);
 // Apache AGE: intentionally left out. Its cypher subset has no shortestPath(),
 // SHORTEST or *BFS/*WSHORTEST syntax at all (all four throw a parse error, not
 // just a "too slow" timeout, on 1.6.0) and no APOC/algo-style procedure library
-// either, so there's no built-in way to express this query.
+// either, so there's no built-in way to express this query. Rougher edges
+// elsewhere too: the newer PG18 build of AGE (1.8.0) segfaults the Postgres
+// backend on this repo's bulk seeding pattern — see docker-compose.yml and
+// readme.md's "Seeding Apache AGE" section — which is why the seed and both
+// queries below only run against the PG16 build.
 
 
 /*
@@ -84,4 +88,4 @@ RETURN properties(nodes(p), 'name') AS route, cost(e) AS meters;
 
 // Apache AGE: intentionally left out, same reason as the unweighted shortest
 // path above — no shortestPath()/SHORTEST/*WSHORTEST syntax and no dijkstra-style
-// procedure to call instead.
+// procedure to call instead. See that note for the PG16-vs-PG18 caveat too.
