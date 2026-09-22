@@ -28,6 +28,11 @@ RETURN length(p);
 // LadybugDB: intentionally left out. SHORTEST over NEXT_LINK (32k links, the HP-MGB
 // route is thousands of hops) did not finish within 60 s.
 
+// Apache AGE: intentionally left out. Its cypher subset has no shortestPath(),
+// SHORTEST or *BFS/*WSHORTEST syntax at all (all four throw a parse error, not
+// just a "too slow" timeout, on 1.6.0) and no APOC/algo-style procedure library
+// either, so there's no built-in way to express this query.
+
 
 /*
     Simple graph traversal
@@ -39,6 +44,14 @@ RETURN nodes(p), relationships(p)
 // LadybugDB (TRAIL: no relationship is reused, like Neo4j's default)
 MATCH p=(:Location {signature:'FLN'})-[:NEXT_LOCATION* TRAIL 1..12]-(:Location {signature:'AVKY'})
 RETURN nodes(p), rels(p);
+
+// Apache AGE: variable-length MATCH works the same as Neo4j/Memgraph/ArcadeDB,
+// but every query has to go through the cypher() SQL wrapper (LOAD 'age'; SET
+// search_path = ag_catalog, "$user", public; first, once per session):
+SELECT * FROM cypher('benchmark', $$
+  MATCH p=(:Location {signature:'FLN'})-[:NEXT_LOCATION*..12]-(:Location {signature:'AVKY'})
+  RETURN nodes(p), relationships(p)
+$$) AS (nodes agtype, relationships agtype);
 
 
 /*
@@ -68,3 +81,7 @@ CALL var_length_extend_max_depth=1000;
 MATCH (l1:Location {signature: 'HP'}), (l2:Location {signature: 'MGB'})
 MATCH p = (l1)-[e:NEXT_LOCATION* WSHORTEST(meters) 1..1000]-(l2)
 RETURN properties(nodes(p), 'name') AS route, cost(e) AS meters;
+
+// Apache AGE: intentionally left out, same reason as the unweighted shortest
+// path above — no shortestPath()/SHORTEST/*WSHORTEST syntax and no dijkstra-style
+// procedure to call instead.

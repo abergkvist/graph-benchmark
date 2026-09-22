@@ -118,7 +118,11 @@ computed in SQL (`length_km::float8 * 1000`) rather than Cypher's `toFloat(...)*
 and for two section rows that float ends up bit-identical to another row's, so AGE's
 `MERGE (from)-[:NEXT_LOCATION {meters: ...}]->(to)` — which matches on the property, like
 the other seeds — collapses them into one edge. Apache AGE has no point type either (like
-Ladybug), so `Location` stores `wkt` plus `lon`/`lat` doubles.
+Ladybug), so `Location` stores `wkt` plus `lon`/`lat` doubles, parsed out of the WKT
+`POINT(lon lat)` string with a SQL regex. 336 of the 2779 Locations have no `lon`/`lat`:
+their source WKT is a `LINESTRING`/`GEOMETRYCOLLECTION`, not a `POINT`, so the regex
+correctly doesn't match rather than parsing garbage coordinates out of it (the other
+seeds' string-splitting approach would silently do the latter for the same rows).
 
 ### Seeding LadybugDB
 

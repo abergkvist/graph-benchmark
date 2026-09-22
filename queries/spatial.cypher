@@ -24,6 +24,21 @@ WHERE 2 * 6378140 * asin(sqrt(
           * pow(sin(radians(l2.lon - l1.lon) / 2), 2))) < 1000
 RETURN l2;
 
+// Apache AGE: no spatial types either, so the same haversine on lon/lat, but
+// AGE has no pow()/power() function, so squaring uses ^ instead, and roughly
+// a ninth of Locations have no lon/lat at all (see readme.md's "Seeding
+// Apache AGE" section) since their source WKT is a LINESTRING/GEOMETRYCOLLECTION,
+// not a POINT — filtered out explicitly rather than silently propagating NULL:
+SELECT * FROM cypher('benchmark', $$
+  MATCH (l1:Location {signature: 'HRBG'})
+  MATCH (l2:Location)
+  WHERE l2.lon IS NOT NULL AND 2 * 6378140 * asin(sqrt(
+          sin(radians(l2.lat - l1.lat) / 2) ^ 2
+          + cos(radians(l1.lat)) * cos(radians(l2.lat))
+            * sin(radians(l2.lon - l1.lon) / 2) ^ 2)) < 1000
+  RETURN l2
+$$) AS (l2 agtype);
+
 
 /*
     Fetch all locations in Stockholm bounding box
@@ -48,3 +63,13 @@ MATCH (l:Location)
 WHERE l.lon >= 17.729 AND l.lon <= 18.287
   AND l.lat >= 59.220 AND l.lat <= 59.44
 RETURN l;
+
+// Apache AGE: same lon/lat comparison, wrapped in the cypher() SQL call. NULL
+// lon/lat (see above) compares to neither bound and is excluded automatically,
+// no IS NOT NULL needed here.
+SELECT * FROM cypher('benchmark', $$
+  MATCH (l:Location)
+  WHERE l.lon >= 17.729 AND l.lon <= 18.287
+    AND l.lat >= 59.220 AND l.lat <= 59.44
+  RETURN l
+$$) AS (l agtype);

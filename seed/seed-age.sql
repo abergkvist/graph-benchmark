@@ -198,8 +198,8 @@ BEGIN
              era_uopid AS "rinfSignature",
              era_optype_label AS type,
              wkt AS wkt,
-             (regexp_match(wkt, 'POINT\(([-0-9.]+) ([-0-9.]+)\)'))[1]::float8 AS lon,
-             (regexp_match(wkt, 'POINT\(([-0-9.]+) ([-0-9.]+)\)'))[2]::float8 AS lat
+             (regexp_match(wkt, 'POINT\s*\(([-0-9.]+) ([-0-9.]+)\)'))[1]::float8 AS lon,
+             (regexp_match(wkt, 'POINT\s*\(([-0-9.]+) ([-0-9.]+)\)'))[2]::float8 AS lat
       FROM rinfop_csv
     ) t;
 
@@ -273,8 +273,8 @@ BEGIN
              station->>'AdvertisedLocationName' AS name,
              NULLIF(station->>'PrimaryLocationCode', '')::int AS plc,
              station->'Geometry'->>'WGS84' AS wkt,
-             (regexp_match(station->'Geometry'->>'WGS84', 'POINT\(([-0-9.]+) ([-0-9.]+)\)'))[1]::float8 AS lon,
-             (regexp_match(station->'Geometry'->>'WGS84', 'POINT\(([-0-9.]+) ([-0-9.]+)\)'))[2]::float8 AS lat
+             (regexp_match(station->'Geometry'->>'WGS84', 'POINT\s*\(([-0-9.]+) ([-0-9.]+)\)'))[1]::float8 AS lon,
+             (regexp_match(station->'Geometry'->>'WGS84', 'POINT\s*\(([-0-9.]+) ([-0-9.]+)\)'))[2]::float8 AS lat
       FROM jsonb_array_elements(
         pg_read_file('/data/trainstations.json')::jsonb -> 'TrainStation'
       ) AS station
