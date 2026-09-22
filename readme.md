@@ -100,7 +100,13 @@ language to `sqlscript`.
 ### Seeding Apache AGE
 
 Apache AGE is a Postgres extension, not a separate server — the `age` service is a
-plain Postgres 16 container with AGE preinstalled. `seed/seed-age.sql` creates the
+plain Postgres 16 container with AGE preinstalled. Pinned to PG16 rather than the
+newer PG18 build: `apache/age:release_PG18_1.8.0` segfaults the Postgres backend on
+the bulk `UNWIND`+`CREATE` pattern below (reproduced — killed the whole connection
+mid-seed). This is a known, still-open class of bug in that combination, not
+something specific to this setup — see [apache/age#2450](https://github.com/apache/age/issues/2450)
+and the linked mail-archive threads on `UNWIND`/`MERGE`/`CREATE` segfaults on PG18.
+Revisit once upstream fixes land. `seed/seed-age.sql` creates the
 `benchmark` graph, loads the CSVs and JSON into Postgres staging tables (AGE has no
 LOAD CSV) and bulk-creates the Link/PlaceCenter/Location graph from them. Run it once
 the container is healthy:

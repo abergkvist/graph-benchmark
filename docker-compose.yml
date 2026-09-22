@@ -90,6 +90,10 @@ services:
 
   # Apache AGE is a Postgres extension, not a separate server. Seed after
   # startup: docker compose exec -T age psql -U postgres -d benchmark < seed/seed-age.sql
+  # Pinned to PG16, not the newer PG18 build: release_PG18_1.8.0 segfaults the
+  # Postgres backend on the bulk UNWIND+CREATE pattern seed-age.sql relies on
+  # (a known, still-open class of bug — see the "Seeding Apache AGE" section
+  # in readme.md for links). Revisit once upstream fixes land.
   age:
     image: apache/age:release_PG16_1.6.0
     environment:
