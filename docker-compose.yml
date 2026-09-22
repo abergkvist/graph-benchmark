@@ -106,3 +106,19 @@ services:
       timeout: 5s
       retries: 20
       start_period: 15s
+
+  # Web UI for Apache AGE. No published image, and upstream's own Dockerfile
+  # doesn't run as-is (see docker/age-viewer/Dockerfile), so it's built from
+  # a local Dockerfile that clones the upstream source fresh at build time.
+  # Log in through its form, it isn't configured via env vars: host "age",
+  # port 5432, database "benchmark", user "postgres", password "benchmark",
+  # graph "benchmark".
+  age-viewer:
+    build:
+      context: ./docker/age-viewer
+    image: graph-benchmark/age-viewer:latest
+    ports:
+      - "3001:3000"
+    depends_on:
+      age:
+        condition: service_healthy

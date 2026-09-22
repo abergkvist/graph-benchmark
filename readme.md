@@ -15,7 +15,7 @@ Start one at a time or all at once:
 docker compose up -d neo4j
 docker compose up -d memgraph memgraph-lab
 docker compose up -d arcadedb
-docker compose up -d age
+docker compose up -d age age-viewer
 ```
 
 ```bash
@@ -40,10 +40,13 @@ docker compose up -d ladybug-explorer
 | Memgraph  | http://localhost:3000       | –                        |
 | ArcadeDB  | http://localhost:2480       | root / benchmark         |
 | Ladybug   | http://localhost:8000       | –                        |
+| Apache AGE Viewer | http://localhost:3001 | see below              |
 
-Apache AGE has no web UI yet (planned for a later iteration, built the same way as
-`ladybug-explorer` — see [Seeding Apache AGE](#seeding-apache-age)); connect with `psql`
-or any Postgres client instead.
+`age-viewer` isn't configured via environment variables — it logs in through a form in
+the browser. Use: host `age`, port `5432`, database `benchmark`, user `postgres`,
+password `benchmark`, graph `benchmark`. (Host `age` is the docker-compose service name,
+resolvable from inside the `age-viewer` container; from the host itself, e.g. `psql`, use
+`localhost:5433` instead — see [Postgres ports](#postgres-ports).)
 
 ## Bolt ports
 
@@ -152,6 +155,12 @@ The explorer is built from `docker/ladybug-explorer/` instead of pulled, because
 published `ghcr.io/ladybugdb/explorer` (0.19.1) cannot open a database written by `lbug`
 0.20.4 (storage version 47 vs 43). If you change the `lbug` version, set `LBUG_VERSION`
 in `docker-compose.yml` to match and run `docker compose build ladybug-explorer`.
+
+`age-viewer` has no published image, so `docker-compose.yml` builds it straight from
+`apache/age-viewer`'s own `Dockerfile` on GitHub (a git build context — nothing vendored
+in this repo). `docker compose up -d age-viewer` builds it on first run; `docker compose
+build age-viewer` rebuilds it against whatever is currently on the upstream `main`
+branch.
 
 ## Shut down
 
