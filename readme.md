@@ -1,6 +1,6 @@
 # graph-benchmark
 
-Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB) against the same dataset and queries.     
+Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB, Apache AGE) against the same dataset and queries.     
 
 ## Prerequisites
 
@@ -15,6 +15,7 @@ Start one at a time or all at once:
 docker compose up -d neo4j
 docker compose up -d memgraph memgraph-lab
 docker compose up -d arcadedb
+docker compose up -d age
 ```
 
 ```bash
@@ -40,12 +41,22 @@ docker compose up -d ladybug-explorer
 | ArcadeDB  | http://localhost:2480       | root / benchmark         |
 | Ladybug   | http://localhost:8000       | –                        |
 
+Apache AGE has no web UI yet (planned for a later iteration, built the same way as
+`ladybug-explorer` — see [Seeding Apache AGE](#seeding-apache-age)); connect with `psql`
+or any Postgres client instead.
+
 ## Bolt ports
 
 | Database  | Port  |
 |-----------|-------|
 | Neo4j     | 7687  |
 | Memgraph  | 7688  |
+
+## Postgres ports
+
+| Database   | Port  | Credentials              |
+|------------|-------|--------------------------|
+| Apache AGE | 5433  | postgres / benchmark     |
      
 ## Data
 
@@ -57,6 +68,7 @@ CSV files in `data/` are mounted into each container:
 | Memgraph  | `/usr/lib/memgraph/import-data/`      |
 | ArcadeDB  | `/home/arcadedb/import/`              |
 | Ladybug Explorer | `/data/` (read-only)           |
+| Apache AGE | `/data/` (read-only)                  |
 
 The `lbug` shell reads `data/` straight from the repo, and the database file goes in `ladybug/`,
 which is mounted at `/database` in the explorer.
@@ -81,6 +93,29 @@ curl -u root:benchmark -X POST http://localhost:2480/api/v1/command/benchmark \
 It prints the record count per type when done, and re-running it re-seeds from
 scratch. Studio (http://localhost:2480) works too — paste the file in and set the
 language to `sqlscript`.
+
+### Seeding Apache AGE
+
+Apache AGE is a Postgres extension, not a separate server — the `age` service is a
+plain Postgres 16 container with AGE preinstalled. `seed/seed-age.sql` creates the
+`benchmark` graph, loads the CSVs and JSON into Postgres staging tables (AGE has no
+LOAD CSV) and bulk-creates the Link/PlaceCenter/Location graph from them. Run it once
+the container is healthy:
+
+```bash
+docker compose exec -T age psql -U postgres -d benchmark < seed/seed-age.sql
+```
+
+Re-running re-seeds from scratch — the graph is dropped and recreated at the top of the
+script. The script ends by printing the same per-type/per-relationship counts as the
+Ladybug check below, so no separate verification query is needed. Expected: Link 31970,
+PlaceCenter 3092, Location 2779, NEXT_LINK 37134, HAS_LINK 3092, NEXT_LOCATION 1893,
+HAS_PLACECENTER 3088. NEXT_LOCATION is 2 lower than the other seeds' 1895: `meters` is
+computed in SQL (`length_km::float8 * 1000`) rather than Cypher's `toFloat(...)*1000`,
+and for two section rows that float ends up bit-identical to another row's, so AGE's
+`MERGE (from)-[:NEXT_LOCATION {meters: ...}]->(to)` — which matches on the property, like
+the other seeds — collapses them into one edge. Apache AGE has no point type either (like
+Ladybug), so `Location` stores `wkt` plus `lon`/`lat` doubles.
 
 ### Seeding LadybugDB
 
