@@ -18,6 +18,21 @@ RUN git clone --branch "${AGE_VIEWER_REF}" --depth 1 https://github.com/apache/a
 
 RUN npm run setup
 
+# frontend/src/components/cypherresult/presentations/CypherResultTable.jsx
+# does `import { uuid } from 'cytoscape/src/util'` — a deep import into
+# cytoscape's own source tree, not its public API. package.json declares
+# "cytoscape": "^3.18.0" (unbounded above), and the unpinned install
+# resolves the latest matching release, 3.34.3, whose source tree was
+# restructured to .mjs files with no src/util left at that path. That
+# makes the whole frontend fail to compile, and react-scripts' dev server
+# reacts to ANY compile failure — not just runtime errors — by pushing its
+# full-page error overlay (pointer-events: auto, max z-index, body {
+# overflow: hidden }) to every connected browser; the overlay itself
+# never paints anything, so the app looks fully rendered while every
+# click, keypress and scroll is actually swallowed by the invisible
+# iframe. 3.26.0 is the newest release still shipping src/util the old way.
+RUN cd frontend && npm install --no-save cytoscape@3.26.0
+
 # backend/package.json uses @babel/plugin-transform-runtime but never lists
 # its @babel/runtime peer as an actual dependency. npm 6 (the node:14 image
 # upstream's own Dockerfile uses) happened to hoist it in anyway; npm 10
