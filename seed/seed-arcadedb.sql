@@ -157,8 +157,6 @@ IMPORT DATABASE file:///home/arcadedb/import/rinf-op.csv WITH
   commitEvery = 50000;
 
 CREATE INDEX ON Location (signature) UNIQUE;
-CREATE INDEX ON Location (coords) GEOSPATIAL
-
 
 -- UPSERT needs that index to exist; it also keeps this section safe to run on
 -- its own against a Location type that is already populated.
@@ -252,6 +250,16 @@ LET $locations = SELECT FROM Location;
 FOREACH ($l IN $locations) {
   CREATE EDGE HAS_PLACECENTER FROM $l TO (SELECT FROM PlaceCenter WHERE signature = $l.signature);
 }
+
+-- Geospatial index over the WKT string, built after both rinf-op.csv and
+-- trainstations.json have written Location.wkt (there is no separate coords
+-- property; the WKT string is the geometry).
+-- Most rows are POINTs, but some rinf-op geometries are GEOMETRYCOLLECTIONs of
+-- long LINESTRINGs (up to ~145k chars). At the default precision 11 (~2.4 m)
+-- those explode into huge numbers of GeoHash cells and the build takes ~65 s;
+-- precision 7 (~153 m) builds in ~3 s. Queries stay exact (the index only
+-- pre-filters, then an exact predicate is applied).
+CREATE INDEX ON Location (wkt) GEOSPATIAL METADATA { "precision": 7 };
 
 
 
