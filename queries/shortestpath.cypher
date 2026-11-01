@@ -2,7 +2,7 @@
     Simple Shortest Path through the Link-node
 */ 
 
-// Neo4j:
+// Neo4j and Traverse:
 MATCH (:Location {signature:'HP'})-[:HAS_PLACECENTER]->(:PlaceCenter)-[:HAS_LINK]->(l1:Link)
 MATCH (:Location {signature:'MGB'})-[:HAS_PLACECENTER]->(:PlaceCenter)-[:HAS_LINK]->(l2:Link)
 with l1, l2 ORDER BY l1.id, l2.id limit 1
@@ -41,7 +41,7 @@ RETURN length(p);
 /*
     Simple graph traversal
 */ 
-// Neo4j, Memgraph, and ArcadeDB 
+// Neo4j, Memgraph, ArcadeDB and Traverse
 MATCH p=(:Location {signature:'FLN'})-[:NEXT_LOCATION*..12]-(:Location {signature:'AVKY'}) 
 RETURN nodes(p), relationships(p)
 
@@ -61,7 +61,7 @@ $$) AS (nodes agtype, relationships agtype);
 /*
     Weighted Shortest Path through the Location-node
 */ 
-// Neo4j:
+// Neo4j and Traverse:
 MATCH (l1:Location {signature: 'HP'}), (l2:Location {signature: 'MGB'})
 CALL apoc.algo.dijkstra(l1, l2, 'NEXT_LOCATION', 'meters')
 YIELD path, weight
