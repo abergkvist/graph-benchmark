@@ -88,6 +88,20 @@ services:
       retries: 20
       start_period: 15s
 
+  # The image is published for linux/amd64 only (no arm64), so on Apple Silicon it
+  # runs under emulation; platform is pinned so Docker doesn't warn or pick wrong.
+  # Studio (web UI) and the HTTP API share 7691, Bolt is 7690. Auth is disabled
+  # by default (open access), so no login; TRAVERSE_API_KEY is only printed in the log.
+  traverse:
+    image: truespar/traverse:0.9.0
+    platform: linux/amd64
+    volumes:
+      - traverse-data:/data
+      - ./data:/import:ro
+    ports:
+      - "7690:7690"
+      - "7691:7691"
+
   # Apache AGE is a Postgres extension, not a separate server. Seed after
   # startup: docker compose exec -T age psql -U postgres -d benchmark < seed/seed-age.sql
   # Pinned to PG16, not the newer PG18 build: release_PG18_1.8.0 segfaults the
@@ -126,3 +140,6 @@ services:
     depends_on:
       age:
         condition: service_healthy
+
+volumes:
+  traverse-data:

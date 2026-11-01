@@ -1,6 +1,6 @@
 # graph-benchmark
 
-Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB, Apache AGE) against the same dataset and queries.     
+Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB, Apache AGE, Traverse) against the same dataset and queries.     
 
 ## Prerequisites
 
@@ -16,6 +16,7 @@ docker compose up -d neo4j
 docker compose up -d memgraph memgraph-lab
 docker compose up -d arcadedb
 docker compose up -d age age-viewer
+docker compose up -d traverse
 ```
 
 ```bash
@@ -41,6 +42,7 @@ docker compose up -d ladybug-explorer
 | ArcadeDB  | http://localhost:2480       | root / benchmark         |
 | Ladybug   | http://localhost:8000       | –                        |
 | Apache AGE Viewer | http://localhost:3001 | see below              |
+| Traverse Studio | http://localhost:7691 | – (auth disabled)      |
 
 `age-viewer` isn't configured via environment variables — it logs in through a form in
 the browser. Use: host `age`, port `5432`, database `benchmark`, user `postgres`,
@@ -54,6 +56,12 @@ resolvable from inside the `age-viewer` container; from the host itself, e.g. `p
 |-----------|-------|
 | Neo4j     | 7687  |
 | Memgraph  | 7688  |
+| Traverse  | 7690  |
+
+Traverse's image (`truespar/traverse:0.9.0`) is published for `linux/amd64` only, so on
+Apple Silicon it runs under emulation (`platform: linux/amd64` in `docker-compose.yml`).
+Expect it to be slower than native, which matters when comparing timings. Studio and the
+HTTP API (`/api`, docs at `/api/docs`) share port 7691.
 
 ## Postgres ports
 
