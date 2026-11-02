@@ -90,11 +90,14 @@ services:
 
   # The image is published for linux/amd64 only (no arm64), so on Apple Silicon it
   # runs under emulation; platform is pinned so Docker doesn't warn or pick wrong.
-  # Studio (web UI) and the HTTP API share 7691, Bolt is 7690. Auth is disabled
-  # by default (open access), so no login; TRAVERSE_API_KEY is only printed in the log.
+  # Studio (web UI) and the HTTP API share 7691, Bolt is 7690. Bolt is open, but
+  # Studio and the HTTP API want an API key; fixed here (must start with tvs_) so it
+  # doesn't change on every start. Seed with seed/seed-traverse.sh.
   traverse:
     image: truespar/traverse:0.9.0
     platform: linux/amd64
+    environment:
+      TRAVERSE_API_KEY: tvs_benchmark
     volumes:
       - traverse-data:/data
       - ./data:/import:ro

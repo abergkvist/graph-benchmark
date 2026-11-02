@@ -4,6 +4,7 @@ CREATE INDEX link_from IF NOT EXISTS FOR (n:Link) ON (n.from);
 CREATE INDEX link_to IF NOT EXISTS FOR (n:Link) ON (n.to);
 CREATE INDEX placecenter_signature IF NOT EXISTS FOR (n:PlaceCenter) ON (n.signature);
 CREATE INDEX placecenter_id IF NOT EXISTS FOR (n:PlaceCenter) ON (n.id);
+CREATE INDEX location_signature IF NOT EXISTS FOR (n:Location) ON (n.signature);
 CREATE INDEX location_rinfSignature IF NOT EXISTS FOR (n:Location) ON (n.rinfSignature);
 CREATE INDEX location_rinfUri IF NOT EXISTS FOR (n:Location) ON (n.rinfUri);
 

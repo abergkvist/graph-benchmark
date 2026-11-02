@@ -42,7 +42,7 @@ docker compose up -d ladybug-explorer
 | ArcadeDB  | http://localhost:2480       | root / benchmark         |
 | Ladybug   | http://localhost:8000       | –                        |
 | Apache AGE Viewer | http://localhost:3001 | see below              |
-| Traverse Studio | http://localhost:7691 | – (auth disabled)      |
+| Traverse Studio | http://localhost:7691 | API key `tvs_benchmark` |
 
 `age-viewer` isn't configured via environment variables — it logs in through a form in
 the browser. Use: host `age`, port `5432`, database `benchmark`, user `postgres`,
@@ -104,6 +104,21 @@ curl -u root:benchmark -X POST http://localhost:2480/api/v1/command/benchmark \
 It prints the record count per type when done, and re-running it re-seeds from
 scratch. Studio (http://localhost:2480) works too — paste the file in and set the
 language to `sqlscript`.
+
+### Seeding Traverse
+
+`seed/seed-traverse.cypher` is `seed-neo4j.cypher` adapted to Traverse 0.9.0 (the header of
+the file lists every difference and why). In Studio, open **Import Data**, pick the
+**Cypher** tab and paste the file (or load it). It takes ~75 s under emulation. Don't paste
+it in the query editor: that sends the whole text as one query and fails with
+`unexpected token after query: Create`. Log in to Studio with the API key `tvs_benchmark`
+(fixed in `docker-compose.yml`). The `./data` folder is mounted at `/import` in the
+container, which is why the paths in the file are `file:///import/...`.
+
+Re-running re-seeds from scratch. If a run is aborted midway, three helper indexes can be
+left behind and the next run reports `index ... already exists` for them; run it once more
+(the end of the file drops them). Expected counts are the same as for Ladybug below, with
+NEXT_LOCATION 1895.
 
 ### Seeding Apache AGE
 
