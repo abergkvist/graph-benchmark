@@ -65,7 +65,7 @@ services:
     image: graph-benchmark/ladybug-explorer:0.20.4
     environment:
       LBUG_FILE: benchmark.lbdb
-      MODE: READ_ONLY
+      #MODE: READ_ONLY
     volumes:
       - ./ladybug:/database
       - ./data:/data:ro

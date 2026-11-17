@@ -2,7 +2,7 @@
 Fetch all locations near 'HRBG' within 1000 meters
 */
 
-// Memgraph, Neo4j and Traverse
+// Memgraph, Neo4j, Traverse and Relate
 MATCH (l1:Location {signature: 'HRBG'})
 MATCH (l2:Location) WHERE point.distance(l1.coords, l2.coords) < 1000
 RETURN l2;
@@ -44,7 +44,7 @@ $$) AS (l2 agtype);
     Fetch all locations in Stockholm bounding box
 */
 
-// Neo4j, Memgraph and Traverse
+// Neo4j, Memgraph, Traverse and Relate
 WITH point({latitude: 59.220, longitude: 17.729}) AS sw, 
     point({latitude: 59.44, longitude: 18.287}) AS ne
 MATCH (l:Location)

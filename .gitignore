@@ -10,3 +10,10 @@ __pycache__/
 .venv/
 venv/
 .env
+
+# Relate store and the CSV copies prepared by seed/seed-relate.sh
+relate/*
+!relate/.gitkeep
+
+# macOS
+.DS_Store

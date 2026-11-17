@@ -2,7 +2,7 @@
     Simple Shortest Path through the Link-node
 */ 
 
-// Neo4j and Traverse:
+// Neo4j, Traverse and Relate:
 MATCH (:Location {signature:'HP'})-[:HAS_PLACECENTER]->(:PlaceCenter)-[:HAS_LINK]->(l1:Link)
 MATCH (:Location {signature:'MGB'})-[:HAS_PLACECENTER]->(:PlaceCenter)-[:HAS_LINK]->(l2:Link)
 with l1, l2 ORDER BY l1.id, l2.id limit 1
@@ -41,7 +41,7 @@ RETURN length(p);
 /*
     Simple graph traversal
 */ 
-// Neo4j, Memgraph, ArcadeDB and Traverse
+// Neo4j, Memgraph, ArcadeDB, Traverse and Relate
 MATCH p=(:Location {signature:'FLN'})-[:NEXT_LOCATION*..12]-(:Location {signature:'AVKY'}) 
 RETURN nodes(p), relationships(p)
 
@@ -89,3 +89,6 @@ RETURN properties(nodes(p), 'name') AS route, cost(e) AS meters;
 // Apache AGE: intentionally left out, same reason as the unweighted shortest
 // path above — no shortestPath()/SHORTEST/*WSHORTEST syntax and no dijkstra-style
 // procedure to call instead. See that note for the PG16-vs-PG18 caveat too.
+
+// Relate: intentionally left out of the weighted query. No APOC/GDS and no
+// WSHORTEST-style syntax; SHORTEST only counts hops.

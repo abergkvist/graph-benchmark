@@ -1,11 +1,24 @@
 # graph-benchmark
 
-Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB, Apache AGE, Traverse) against the same dataset and queries.     
+Comparison of graph databases (Neo4j, Memgraph, ArcadeDB, LadybugDB, Apache AGE, Traverse, Relate) against the same dataset and queries.     
+
+## Databases
+
+| Database   | Website | Source / image |
+|------------|---------|----------------|
+| Neo4j      | [neo4j.com](https://neo4j.com) | [neo4j/neo4j](https://github.com/neo4j/neo4j) |
+| Memgraph   | [memgraph.com](https://memgraph.com) | [memgraph/memgraph](https://github.com/memgraph/memgraph) |
+| ArcadeDB   | [arcadedb.com](https://arcadedb.com) | [ArcadeData/arcadedb](https://github.com/ArcadeData/arcadedb) |
+| LadybugDB  | [ladybugdb.com](https://ladybugdb.com) | [LadybugDB/ladybug](https://github.com/LadybugDB/ladybug) |
+| Apache AGE | [age.apache.org](https://age.apache.org) | [apache/age](https://github.com/apache/age) |
+| Traverse   | – | [truespar/traverse](https://github.com/truespar/traverse) ([Docker Hub](https://hub.docker.com/r/truespar/traverse)) |
+| Relate     | [relatedb.ai](https://relatedb.ai) ([docs](https://relatedb.ai/docs/)) | [relatedb/relate](https://github.com/relatedb/relate) |
 
 ## Prerequisites
 
 - Docker and Docker Compose
 - For LadybugDB: the `lbug` shell installed on the host, used for seeding
+- For Relate: the `relate` CLI installed on the host (`curl -sSfL https://relatedb.ai/install.sh | bash`, installs to `~/.local/bin`) and `python3`
 
 ## Starting databases
 
@@ -57,6 +70,7 @@ resolvable from inside the `age-viewer` container; from the host itself, e.g. `p
 | Neo4j     | 7687  |
 | Memgraph  | 7688  |
 | Traverse  | 7690  |
+| Relate    | 7689 (only while `relate serve` runs, see [Seeding Relate](#seeding-relate)) |
 
 Traverse's image (`truespar/traverse:0.9.0`) is published for `linux/amd64` only, so on
 Apple Silicon it runs under emulation (`platform: linux/amd64` in `docker-compose.yml`).
@@ -194,6 +208,41 @@ in `docker-compose.yml` to match and run `docker compose build ladybug-explorer`
 in this repo). `docker compose up -d age-viewer` builds it on first run; `docker compose
 build age-viewer` rebuilds it against whatever is currently on the upstream `main`
 branch.
+
+### Seeding Relate
+
+Relate (https://relatedb.ai, v1.1.0) is embedded like LadybugDB: the database is a store
+directory (`relate/benchmark`) opened by the `relate` CLI, not a docker-compose service
+(no prebuilt image is published). It speaks Cypher and can serve Bolt, so Neo4j drivers
+work. Seed from the repo root:
+
+```bash
+./seed/seed-relate.sh
+```
+
+It takes a couple of seconds and prints the per-type counts at the end, which match
+Ladybug/Traverse (NEXT_LOCATION 1895). Re-running re-seeds from scratch. Differences from
+`seed-neo4j.cypher` are listed in the header of `seed/seed-relate.cypher`: there is no
+APOC, so the JSON is passed in with `--fetch-params`, and `LOAD CSV` refuses files over
+8 MiB, so the script first writes a two-column copy of `lank.csv` to `relate/import/`.
+
+Run queries against the store with the CLI (the store is single-writer, so `--read-only`
+also lets a second process read it):
+
+```bash
+relate --database relate/benchmark --read-only "MATCH (n:Location) RETURN count(n)"
+```
+
+To use Bolt/HTTP clients, serve it (ports have no default, and `--auth none` turns off
+the generated token; 7689 avoids clashing with the other Bolt ports):
+
+```bash
+relate serve --database relate/benchmark --read-only --bolt 7689 --http 7692 --auth none
+```
+
+The weighted shortest path query is not available: Relate has no APOC/GDS procedures and
+no `WSHORTEST`-style syntax, see `queries/shortestpath.cypher`. Relate also rejects
+explicit hop bounds over 500 by default (`--max-traversal-depth`, up to 2000).
 
 ## Shut down
 
